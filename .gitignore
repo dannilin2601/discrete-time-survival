@@ -5,6 +5,7 @@ __pycache__/
 
 # Ignore virtual environment folder
 discre_time_env/
+data/
 
 # Ignore Jupyter Notebook checkpoints (if any)
 .ipynb_checkpoints/
