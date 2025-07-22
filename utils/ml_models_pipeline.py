@@ -160,7 +160,7 @@ def print_formatted_metrics(result):
     print(f"  Mean ROC-AUC: {result['Validation']['ROC AUC']:.4f}")
     print(f"  Mean PR-AUC: {result['Validation']['PR-AUC']:.4f}")
 
-def nn_model(df):
+def run_nnet(df):
 
     res = gp_minimize(objective_nn,
                     [Integer(1, 10), Real(0.01, 0.5), Integer(5, 50, name='bins')],
