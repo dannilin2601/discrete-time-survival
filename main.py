@@ -6,6 +6,8 @@ import tensorflow as tf
 import random
 import os
 
+from utils.support_functions import summarize_cv_metrics
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -18,11 +20,16 @@ def set_seed(seed=42):
 
 set_seed(42)
 
-df = pd.read_csv("data/df_normal.csv")
+def main(dataset_path="data/df_normal.csv", dataset_name="Normal Dataset"):
 
-print("Neural Network Model Results")
-run_nnet(df)
-print(" ")
-print("Cox Proportional Hazards Model Results")
-run_coxph(df)
+    print(f"Running models on dataset: {dataset_name}")
+    df = pd.read_csv(dataset_path)
+    
+    nnet_results = run_nnet(df)
+    cox_results = run_coxph(df)
 
+    output = summarize_cv_metrics(nnet_results, cox_results, dataset_name)
+
+    output.to_csv(f"output/{dataset_name}_results.csv", index=False)
+
+main(dataset_path="data/df_normal.csv", dataset_name="PBC datset")

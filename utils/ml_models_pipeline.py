@@ -145,7 +145,6 @@ def nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=(32,
     }
 
 
-
 def print_formatted_metrics(result):
     print("📊 Train Metrics:")
     print(f"  Mean Brier: {result['Train']['Brier']:.4f}")
@@ -173,11 +172,13 @@ def run_nnet(df):
     best_alpha = res.x[1]
     best_bins = res.x[2]
 
-    print(f"Best size: {best_size}, Best alpha: {best_alpha}, Best bins: {best_bins}")
+    # print(f"Best size: {best_size}, Best alpha: {best_alpha}, Best bins: {best_bins}")
 
     result_nnet = nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=best_size, alpha=best_alpha, bins=best_bins)
 
-    print_formatted_metrics(result_nnet)
+    # print_formatted_metrics(result_nnet)
+
+    return result_nnet
 
 
 #####  CoxPH Functions #####
@@ -336,9 +337,11 @@ def summarize_cv_metrics(metrics_dict, metrics_type):
     }
 
     # Print results
-    print(f"📊 {metrics_type} Metrics:")
-    for k, v in results.items():
-        print(f"  {k}: {v:.4f}")
+    # print(f"📊 {metrics_type} Metrics:")
+    # for k, v in results.items():
+    #     print(f"  {k}: {v:.4f}")
+
+    return results
 
 def run_coxph(df):
 
@@ -349,5 +352,10 @@ def run_coxph(df):
         event_col='statusComp'     # event indicator column
     )
 
-    summarize_cv_metrics(cv_metrics['Train'], "Train")
-    summarize_cv_metrics(cv_metrics['Validation'], "Validation")
+    train_results = summarize_cv_metrics(cv_metrics['Train'], "Train")
+    val_results = summarize_cv_metrics(cv_metrics['Validation'], "Validation")
+
+    return {
+        "Train": train_results,
+        "Validation": val_results
+    }
