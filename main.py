@@ -1,10 +1,14 @@
-from ml_models_pipeline import run_coxph, run_nnet
+from utils.ml_models_pipeline import run_nnet, run_coxph
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 
 import random
 import os
+
+import warnings
+warnings.filterwarnings("ignore")
+
 
 def set_seed(seed=42):
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -21,3 +25,4 @@ run_nnet(df)
 print(" ")
 print("Cox Proportional Hazards Model Results")
 run_coxph(df)
+

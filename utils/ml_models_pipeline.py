@@ -26,7 +26,7 @@ import tensorflow as tf
 from skopt import gp_minimize
 from skopt.space import Integer, Real
 
-from person_period import generate_person_time_data
+from utils.person_period import generate_person_time_data
 
 ##### Neural Network Functions #####
 
@@ -144,10 +144,7 @@ def nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=(32,
         "Validation": avg_val_metrics
     }
 
-def objective_nn(params):
-    hidden_layers, alpha, bins = params
-    result = nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=hidden_layers, alpha=alpha, bins=bins)
-    return -result['Validation']['PR-AUC']
+
 
 def print_formatted_metrics(result):
     print("📊 Train Metrics:")
@@ -161,6 +158,11 @@ def print_formatted_metrics(result):
     print(f"  Mean PR-AUC: {result['Validation']['PR-AUC']:.4f}")
 
 def run_nnet(df):
+
+    def objective_nn(params):
+        hidden_layers, alpha, bins = params
+        result = nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=hidden_layers, alpha=alpha, bins=bins)
+        return -result['Validation']['PR-AUC']
 
     res = gp_minimize(objective_nn,
                     [Integer(1, 10), Real(0.01, 0.5), Integer(5, 50, name='bins')],
