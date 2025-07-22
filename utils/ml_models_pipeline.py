@@ -119,14 +119,14 @@ def nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=(32,
         val_brier, val_auc, val_pr_auc = evaluate_metrics(y_val, y_val_prob)
 
         train_metrics_list.append({
-            "Brier": train_brier,
-            "ROC AUC": train_auc,
-            "PR-AUC": train_pr_auc
+            "Mean Brier": train_brier,
+            "Mean ROC-AUC": train_auc,
+            "Mean PR-AUC": train_pr_auc
         })
         val_metrics_list.append({
-            "Brier": val_brier,
-            "ROC AUC": val_auc,
-            "PR-AUC": val_pr_auc
+            "Mean Brier": val_brier,
+            "Mean ROC-AUC": val_auc,
+            "Mean PR-AUC": val_pr_auc
         })
 
     # Average metrics across folds
@@ -161,7 +161,7 @@ def run_nnet(df):
     def objective_nn(params):
         hidden_layers, alpha, bins = params
         result = nnet_cv(df, time_var="survTime", status_var="statusComp", hidden_layers=hidden_layers, alpha=alpha, bins=bins)
-        return -result['Validation']['PR-AUC']
+        return -result['Validation']['Mean PR-AUC']
 
     res = gp_minimize(objective_nn,
                     [Integer(1, 10), Real(0.01, 0.5), Integer(5, 50, name='bins')],
@@ -230,6 +230,8 @@ def fit_coxph_pipeline(df, duration_col, event_col, time_horizons):
         metrics[f"PR_AUC_{t}"] = pr_auc
 
     return metrics, cph
+
+
 
 
 def fit_coxph_pipeline_cv(df, duration_col, event_col, cv_folds=5):

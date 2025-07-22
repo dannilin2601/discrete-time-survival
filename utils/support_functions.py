@@ -1,46 +1,52 @@
-
 import pandas as pd
 
+def summarize_cv_metrics(model_results_list, dataset_name):
+    """
+    Combine metrics from multiple models into a single DataFrame.
 
-import pandas as pd
+    Parameters:
+    - model_results_list: list of tuples (model_name, results_dict)
+    - dataset_name: name of the dataset (used as index)
 
-def summarize_cv_metrics(nn_results, coxph_results, dataset_name):
+    Returns:
+    - DataFrame with rows = metrics, columns = Model_Split
+    """
+
     def flatten_results(results, model_name):
         """
-        Flatten nested metrics into a dictionary with keys like:
-        NeuralNet_Train_Brier, NeuralNet_Validation_ROC AUC, etc.
+        Flatten nested metrics into a dictionary:
+        e.g., NeuralNet_Train_Brier -> value
         """
         flat_dict = {}
-        for split, metrics in results.items():  # e.g., 'Train', 'Validation'
+        for split, metrics in results.items():
             for metric, value in metrics.items():
                 key = f"{model_name}_{split}_{metric}"
                 flat_dict[key] = value
         return flat_dict
 
-    # Flatten both model results
-    nn_flat = flatten_results(nn_results, "NeuralNet")
-    coxph_flat = flatten_results(coxph_results, "CoxPH")
+    combined_flat = {}
 
-    # Combine results into one dictionary
-    combined_flat = {**nn_flat, **coxph_flat}
+    # Flatten results for all models
+    for model_name, results in model_results_list:
+        combined_flat.update(flatten_results(results, model_name))
 
     # Convert to DataFrame
-    df = pd.DataFrame(combined_flat, index=[dataset_name])
+    df = pd.DataFrame(combined_flat, index=[dataset_name]).transpose().reset_index()
+    df.columns = ["Metric_Split_Model", "Value"]
 
-    # Transpose for metrics as rows and models as columns
-    summary_df = df.transpose().reset_index()
-    summary_df.columns = ["Metric", dataset_name]
+    # Split column into Model, Split, Metric
+    df[['Model', 'Split', 'Metric']] = df['Metric_Split_Model'].str.split('_', expand=True)
+    df = df.drop(columns=["Metric_Split_Model"])
 
-    # Split "Metric" column into Model, Split, and Metric for clarity
-    summary_df[['Model', 'Split', 'Metric Name']] = summary_df['Metric'].str.split('_', n=2, expand=True)
-    summary_df = summary_df.drop(columns=["Metric"])
-
-    # Pivot: rows = Metric Name, columns = Model_Split
-    final_df = summary_df.pivot_table(
-        index="Metric Name",
+    # Pivot table: rows = Metric, columns = Model_Split
+    pivot_df = df.pivot_table(
+        index="Metric",
         columns=["Model", "Split"],
-        values=dataset_name
+        values="Value"
     )
 
-    return final_df
+    # Flatten multi-level columns
+    pivot_df.columns = [f"{model}_{split}" for model, split in pivot_df.columns]
+    pivot_df = pivot_df.reset_index()
 
+    return pivot_df

@@ -24,12 +24,18 @@ def main(dataset_path="data/df_normal.csv", dataset_name="Normal Dataset"):
 
     print(f"Running models on dataset: {dataset_name}")
     df = pd.read_csv(dataset_path)
-    
+
     nnet_results = run_nnet(df)
     cox_results = run_coxph(df)
 
-    output = summarize_cv_metrics(nnet_results, cox_results, dataset_name)
+    model_results_list = [
+        ("NeuralNet", nnet_results),
+        ("CoxPH", cox_results)
+    ]
 
-    output.to_csv(f"output/{dataset_name}_results.csv", index=False)
+    summary_df = summarize_cv_metrics(model_results_list, dataset_name="PBC Dataset")
+    print(summary_df)
 
-main(dataset_path="data/df_normal.csv", dataset_name="PBC datset")
+    summary_df.to_csv(f"output/{dataset_name}_results.csv", index=False)
+
+main(dataset_path="data/df_normal.csv", dataset_name="PBC_datset")
