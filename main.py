@@ -34,8 +34,8 @@ def main(dataset_path="data/df_normal.csv", dataset_name="Normal Dataset"):
     result_mlp = run_mlpclassifier(df) #neural network
     rsf_results = run_rsf(df) #random survival forest
 
-    print(rsf_results)
-    print(cox_results)
+    # print(rsf_results)
+    # print(cox_results)
 
     model_results_list = [
         ("CoxPH", cox_results), # Cox Proportional Hazards model
