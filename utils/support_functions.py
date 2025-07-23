@@ -47,6 +47,5 @@ def summarize_cv_metrics(model_results_list, dataset_name):
 
     # Flatten multi-level columns
     pivot_df.columns = [f"{model}_{split}" for model, split in pivot_df.columns]
-    pivot_df = pivot_df.reset_index()
 
     return pivot_df.T
