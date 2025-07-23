@@ -50,6 +50,8 @@ def main(dataset_path="data/df_normal.csv", dataset_name="Normal Dataset"):
     summary_df = summarize_cv_metrics(model_results_list, dataset_name="PBC Dataset")
     print(summary_df)
 
+    summary_df = summary_df.reset_index()
+
     summary_df.to_csv(f"output/{dataset_name}_results.csv", index=False)
 
 main(dataset_path="data/df_normal.csv", dataset_name="PBC_dataset")
