@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def summarize_cv_metrics(model_results_list, dataset_name):
     """
@@ -42,7 +43,9 @@ def summarize_cv_metrics(model_results_list, dataset_name):
     pivot_df = df.pivot_table(
         index="Metric",
         columns=["Model", "Split"],
-        values="Value"
+        values="Value",
+        dropna=False,              # 🚨 Prevent dropping NaNs
+        fill_value=np.nan          # Keep explicit NaNs
     )
 
     # Flatten multi-level columns

@@ -25,6 +25,8 @@ from sksurv.metrics import concordance_index_censored
 from skopt import gp_minimize
 from skopt.space import Integer, Real
 
+from lifelines.exceptions import ConvergenceError
+
 from utils.person_period import generate_person_time_data
 
 
@@ -70,6 +72,11 @@ def model_cv(df, model_fn, param_dict, cv_folds=5, time_var="survTime", status_v
         X_val = val_df.drop(columns=[time_var, status_var])
         y_val = val_df[status_var].astype(int)
 
+        # Clean column names to remove problematic characters
+        X_train_person_period.columns = X_train_person_period.columns.str.replace(r"[\[\]<>]", "_", regex=True)
+        X_train.columns = X_train.columns.str.replace(r"[\[\]<>]", "_", regex=True)
+        X_val.columns = X_val.columns.str.replace(r"[\[\]<>]", "_", regex=True)
+
         model = model_fn(**param_dict)
         model.fit(X_train_person_period, y_train_person_period)
 
@@ -98,22 +105,23 @@ def model_cv(df, model_fn, param_dict, cv_folds=5, time_var="survTime", status_v
 
 ### ===== Logistic Regression ===== ###
 
-def run_logreg(df):
+def run_logreg(df, time_var="survTime", status_var="statusComp"):
     def objective(params):
         C, bins = params
-        result = model_cv(df, LogisticRegression, {"C": C, "solver": "liblinear"}, cv_folds=5, bins=bins)
+        result = model_cv(df, LogisticRegression, {"C": C, "solver": "liblinear"}, cv_folds=5, time_var=time_var, status_var=status_var, bins=bins)
         return -result['Val']['Mean PR-AUC']
 
     res = gp_minimize(objective, [Real(0.001, 10, prior='log-uniform'), Integer(5, 50, name='bins')], n_calls=15, random_state=0)
     best_C = res.x[0]
     best_bins = res.x[1]
 
-    return model_cv(df, LogisticRegression, {"C": best_C, "solver": "liblinear"}, cv_folds=5, bins=best_bins)
+    return model_cv(df, LogisticRegression, {"C": best_C, "solver": "liblinear"}, cv_folds=5, time_var=time_var, status_var=status_var, bins=best_bins)
 
 
 ### ===== XGBoost ===== ###
 
-def run_xgboost(df):
+def run_xgboost(df, time_var="survTime", status_var="statusComp"):
+
     def objective(params):
 
         max_depth, learning_rate, bins = params
@@ -123,7 +131,10 @@ def run_xgboost(df):
             "learning_rate": learning_rate,
             "use_label_encoder": False,
             "eval_metric": "logloss"
-        }, cv_folds=5, bins=bins)
+        }, cv_folds=5,
+           time_var=time_var,
+           status_var=status_var,
+           bins=bins)
 
         return -result['Val']['Mean PR-AUC']
 
@@ -137,21 +148,24 @@ def run_xgboost(df):
         "learning_rate": best_lr,
         "use_label_encoder": False,
         "eval_metric": "logloss"
-    }, cv_folds=5, bins=best_bins)
+    }, cv_folds=5, time_var=time_var, status_var=status_var, bins=best_bins)
 
 
 ### ===== SVM (with probability calibration) ===== ###
-    
-def run_svm(df):
+
+def run_svm(df, time_var="survTime", status_var="statusComp"):
     def objective(params):
         C, bins = params
-        result = model_cv(df, SVC, {"C": C, "kernel": "rbf", "probability": True}, cv_folds=5, bins=bins)
+        result = model_cv(df, SVC, {"C": C, "kernel": "rbf", "probability": True}, cv_folds=5,
+                           time_var=time_var,
+                           status_var=status_var,
+                           bins=bins)
         return -result['Val']['Mean PR-AUC']
 
     res = gp_minimize(objective, [Real(0.001, 10, prior='log-uniform'), Integer(5, 50, name='bins')], n_calls=15, random_state=0)
     best_C, best_bins = res.x
 
-    return model_cv(df, SVC, {"C": best_C, "kernel": "rbf", "probability": True}, cv_folds=5, bins=best_bins)
+    return model_cv(df, SVC, {"C": best_C, "kernel": "rbf", "probability": True}, cv_folds=5, time_var=time_var, status_var=status_var, bins=best_bins)
 
 
 ### ===== Random Forest  ===== ###
@@ -245,7 +259,7 @@ def run_random_forest(df, time_var="survTime", status_var="statusComp", cv_folds
 
 ### ===== Neural Nets  ===== ###
 
-def run_mlpclassifier(df):
+def run_mlpclassifier(df, time_var="survTime", status_var="statusComp"):
     """
     Tune and evaluate MLPClassifier with multiple hidden layers using model_cv.
     """
@@ -269,6 +283,8 @@ def run_mlpclassifier(df):
             df,
             model_fn=MLPClassifier,
             param_dict=param_dict,
+            time_var=time_var,
+            status_var=status_var,
             bins=bins
         )
 
@@ -314,73 +330,81 @@ def run_mlpclassifier(df):
         df,
         model_fn=MLPClassifier,
         param_dict=best_params,
+        time_var=time_var,
+        status_var=status_var,
         bins=best_bins
     )
 
     return result_mlp
 
 
-
 ##### Survival Models #####
 
+
+from lifelines.exceptions import ConvergenceError
 
 def run_coxph(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
     """
     Wrapper for Cox Proportional Hazards model with k-fold cross-validation.
-    Fits the model once per fold and evaluates on both train and validation sets.
+    Returns NaN metrics for folds where convergence fails.
     """
     def fit_and_eval(train_df, val_df, fitted_model=None):
-        if fitted_model is None:
-            cph = CoxPHFitter(penalizer=0.01)
-            cph.fit(train_df, duration_col=duration_col, event_col=event_col)
-        else:
-            cph = fitted_model
-
         def evaluate(df_eval):
-            X_eval = df_eval.drop([duration_col, event_col], axis=1)
-            y_eval_time = df_eval[duration_col].values
-            y_eval_event = df_eval[event_col].values
+            try:
+                X_eval = df_eval.drop([duration_col, event_col], axis=1)
+                y_eval_time = df_eval[duration_col].values
+                y_eval_event = df_eval[event_col].values
 
-            risk_scores = -cph.predict_partial_hazard(X_eval).values.flatten()
-            c_index = concordance_index(y_eval_time, risk_scores, y_eval_event)
-            metrics = {"C-index": c_index}
+                risk_scores = -fitted_model.predict_partial_hazard(X_eval).values.flatten()
+                c_index = concordance_index(y_eval_time, risk_scores, y_eval_event)
+                metrics = {"C-index": c_index}
 
-            time_horizons = np.sort(df_eval[duration_col].unique())
-            surv_funcs = cph.predict_survival_function(X_eval)
+                time_horizons = np.sort(df_eval[duration_col].unique())
+                surv_funcs = fitted_model.predict_survival_function(X_eval)
 
-            for t in time_horizons:
-                surv_probs = (
-                    surv_funcs.loc[t].values if t in surv_funcs.index
-                    else surv_funcs.apply(lambda s: np.interp(t, surv_funcs.index, s), axis=0).values
-                )
-                pred_risk = 1 - surv_probs
-                observed = (y_eval_time <= t).astype(int)
+                for t in time_horizons:
+                    surv_probs = (
+                        surv_funcs.loc[t].values if t in surv_funcs.index
+                        else surv_funcs.apply(lambda s: np.interp(t, surv_funcs.index, s), axis=0).values
+                    )
+                    pred_risk = 1 - surv_probs
+                    observed = (y_eval_time <= t).astype(int)
 
-                metrics[f"Brier_{t}"] = brier_score_loss(observed, pred_risk)
-                if len(np.unique(observed)) > 1:
-                    metrics[f"AUC_{t}"] = roc_auc_score(observed, pred_risk)
-                    metrics[f"PR_AUC_{t}"] = average_precision_score(observed, pred_risk)
-                else:
-                    metrics[f"AUC_{t}"] = np.nan
-                    metrics[f"PR_AUC_{t}"] = np.nan
-            return metrics
+                    metrics[f"Brier_{t}"] = brier_score_loss(observed, pred_risk)
+                    if len(np.unique(observed)) > 1:
+                        metrics[f"AUC_{t}"] = roc_auc_score(observed, pred_risk)
+                        metrics[f"PR_AUC_{t}"] = average_precision_score(observed, pred_risk)
+                    else:
+                        metrics[f"AUC_{t}"] = np.nan
+                        metrics[f"PR_AUC_{t}"] = np.nan
+
+                return metrics
+            except Exception as e:
+                print(f"⚠️ Evaluation error: {e}. Returning NaNs.")
+                return {"C-index": np.nan, "Mean Brier": np.nan, "Mean ROC-AUC": np.nan, "Mean PR-AUC": np.nan}
 
         return evaluate(train_df), evaluate(val_df)
 
     skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
     train_metrics, val_metrics = [], []
 
-    for train_idx, val_idx in skf.split(df, df[event_col]):
+    for fold, (train_idx, val_idx) in enumerate(skf.split(df, df[event_col])):
         train_df, val_df = df.iloc[train_idx].reset_index(drop=True), df.iloc[val_idx].reset_index(drop=True)
         cph_model = CoxPHFitter(penalizer=0.01)
-        cph_model.fit(train_df, duration_col=duration_col, event_col=event_col)
-        train_result, val_result = fit_and_eval(train_df, val_df, fitted_model=cph_model)
+
+        try:
+            cph_model.fit(train_df, duration_col=duration_col, event_col=event_col)
+            train_result, val_result = fit_and_eval(train_df, val_df, fitted_model=cph_model)
+        except ConvergenceError as e:
+            print(f"⚠️ Fold {fold+1}: Convergence error - {e}. Using NaNs for this fold.")
+            nan_metrics = {"C-index": np.nan, "Mean Brier": np.nan, "Mean ROC-AUC": np.nan, "Mean PR-AUC": np.nan}
+            train_result, val_result = nan_metrics, nan_metrics
+
         train_metrics.append(train_result)
         val_metrics.append(val_result)
 
     def avg_metrics(metrics_list):
         all_keys = {k for m in metrics_list for k in m}
-
         avg = {}
         for key in all_keys:
             values = [m[key] for m in metrics_list if key in m and not np.isnan(m[key])]
@@ -434,6 +458,7 @@ def run_rsf(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
             n_jobs=-1,
             random_state=42
         )
+
         rsf.fit(X_train, y_train)
 
         # Time domain clipping using unique_times_
@@ -474,6 +499,7 @@ def run_rsf(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
     train_metrics, val_metrics = [], []
 
     for train_idx, val_idx in skf.split(df, df[event_col]):
+
         train_df, val_df = df.iloc[train_idx].reset_index(drop=True), df.iloc[val_idx].reset_index(drop=True)
 
         # Fit once per fold and evaluate on both train and validation
