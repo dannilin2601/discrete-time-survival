@@ -53,9 +53,9 @@ def main(dataset_path="data/df_normal.csv", dataset_name="Normal Dataset", time_
 
     summary_df.to_csv(f"output/{dataset_name}_results.csv", index=False)
 
-main(dataset_path="data/df_normal.csv", dataset_name="PBC_dataset", time_var="survTime", status_var="statusComp")
+#main(dataset_path="data/df_normal.csv", dataset_name="PBC_dataset", time_var="survTime", status_var="statusComp")
 
-#main(dataset_path="data/TCGA_dataset/clinical/df_white_kirc.csv", dataset_name="clinical_white_kirc", time_var="OS.time", status_var="OS") 
+main(dataset_path="data/TCGA_dataset/clinical/df_white_kirc.csv", dataset_name="clinical_white_kirc", time_var="OS.time", status_var="OS") 
 
 #main(dataset_path="data/TCGA_dataset/mirna/df_white_kirc.csv", dataset_name="mirna_white_kirc", time_var="OS.time", status_var="OS") 
 
