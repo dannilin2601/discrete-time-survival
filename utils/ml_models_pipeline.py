@@ -1,6 +1,3 @@
-import os
-import random
-import csv
 from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 from sklearn.svm import SVC
@@ -434,47 +431,22 @@ def run_coxph(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
 
 
 def run_rsf(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
-    """
-    Random Survival Forest with k-fold cross-validation.
-    Computes C-index, Mean Brier score, Mean ROC AUC, and Mean PR-AUC.
-    """
     def to_structured_array(data):
         return np.array([(bool(e), t) for e, t in zip(data[event_col], data[duration_col])],
                         dtype=[('event', 'bool'), ('time', 'float')])
 
-    def fit_and_eval(train_df, val_df):
-        X_train = train_df.drop([duration_col, event_col], axis=1)
-        y_train = to_structured_array(train_df)
-
-        X_val = val_df.drop([duration_col, event_col], axis=1)
-        y_val = to_structured_array(val_df)
-
-        # Fit RSF once
-        rsf = RandomSurvivalForest(
-            n_estimators=200,
-            min_samples_split=10,
-            min_samples_leaf=15,
-            max_features="sqrt",
-            n_jobs=-1,
-            random_state=42
-        )
-
-        rsf.fit(X_train, y_train)
-
-        # Time domain clipping using unique_times_
+    def evaluate(rsf, X, y, raw_df):
         min_time, max_time = rsf.unique_times_[0], rsf.unique_times_[-1]
-        candidate_times = np.sort(val_df[duration_col].unique())
+        candidate_times = np.sort(raw_df[duration_col].unique())
         time_horizons = [t for t in candidate_times if min_time <= t <= max_time]
 
         metrics = {}
-
-        # Survival functions
-        surv_funcs = rsf.predict_survival_function(X_val)
+        surv_funcs = rsf.predict_survival_function(X)
 
         for t in time_horizons:
             surv_probs = np.array([fn(t) for fn in surv_funcs])
             pred_risk = 1 - surv_probs
-            observed = (val_df[duration_col] <= t).astype(int)
+            observed = (raw_df[duration_col] <= t).astype(int)
 
             metrics[f"Brier_{t}"] = brier_score_loss(observed, pred_risk)
             if len(np.unique(observed)) > 1:
@@ -484,13 +456,7 @@ def run_rsf(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
                 metrics[f"AUC_{t}"] = np.nan
                 metrics[f"PR_AUC_{t}"] = np.nan
 
-        # C-index
-        c_index = concordance_index_censored(
-            y_val["event"], y_val["time"], rsf.predict(X_val)
-        )
-
-        # print(c_index)
-
+        c_index = concordance_index_censored(y["event"], y["time"], rsf.predict(X))
         metrics["C-index"] = c_index[0]
 
         return metrics
@@ -499,25 +465,35 @@ def run_rsf(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
     train_metrics, val_metrics = [], []
 
     for train_idx, val_idx in skf.split(df, df[event_col]):
+        train_df = df.iloc[train_idx].reset_index(drop=True)
+        val_df = df.iloc[val_idx].reset_index(drop=True)
 
-        train_df, val_df = df.iloc[train_idx].reset_index(drop=True), df.iloc[val_idx].reset_index(drop=True)
+        X_train = train_df.drop([duration_col, event_col], axis=1)
+        y_train = to_structured_array(train_df)
 
-        # Fit once per fold and evaluate on both train and validation
-        fitted_metrics = fit_and_eval(train_df, train_df)
-        validation_metrics = fit_and_eval(train_df, val_df)
+        X_val = val_df.drop([duration_col, event_col], axis=1)
+        y_val = to_structured_array(val_df)
 
-        train_metrics.append(fitted_metrics)
-        val_metrics.append(validation_metrics)
+        rsf = RandomSurvivalForest(
+            n_estimators=200,
+            min_samples_split=10,
+            min_samples_leaf=15,
+            max_features="sqrt",
+            n_jobs=-1,
+            random_state=42
+        )
+        rsf.fit(X_train, y_train)
+
+        train_metrics.append(evaluate(rsf, X_train, y_train, train_df))
+        val_metrics.append(evaluate(rsf, X_val, y_val, val_df))
 
     def avg_metrics(metrics_list):
         all_keys = {k for m in metrics_list for k in m}
-
         avg = {}
         for key in all_keys:
             values = [m[key] for m in metrics_list if key in m and not np.isnan(m[key])]
             mean_val = np.mean(values) if values else np.nan
 
-            # Collapse time-based metrics into mean
             if key.startswith("Brier_"):
                 avg["Mean Brier"] = avg.get("Mean Brier", []) + [mean_val]
             elif key.startswith("AUC_"):
@@ -527,13 +503,11 @@ def run_rsf(df, duration_col="survTime", event_col="statusComp", cv_folds=5):
             else:
                 avg[key] = mean_val
 
-        # Final averaging for collapsed metrics
         for k in ["Mean Brier", "Mean ROC-AUC", "Mean PR-AUC"]:
             if k in avg:
                 avg[k] = np.nanmean(avg[k])
 
         return avg
-
 
     return {
         "Train": avg_metrics(train_metrics),
