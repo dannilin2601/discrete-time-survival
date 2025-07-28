@@ -150,7 +150,7 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
         Real(1.0, 5.0, name="gamma"),
         Real(1e-4, 1e-2, prior='log-uniform', name="lr"),
         Integer(5, 50, name="bins"),
-        Real(0.001, 1, name="l2_reg"),       # L2 regularization strength
+        Real(0.001, 1, name="l2_reg")       # L2 regularization strength
     ]
 
     res = gp_minimize(
