@@ -13,7 +13,7 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 
 def model_cv_keras_focal(df, model_fn, param_dict, cv_folds=5,
-                         time_var="survTime", status_var="statusComp", bins=20):
+                         time_var="survTime", status_var="statusComp", bins=20, epochs=100):
 
     skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=42)
     train_metrics_list, val_metrics_list = [], []
@@ -56,10 +56,10 @@ def model_cv_keras_focal(df, model_fn, param_dict, cv_folds=5,
         with tf.device('/GPU:0'):
 
             model.fit(X_train_person_period, y_train_person_period,
-                    epochs=100,
+                    epochs=epochs,
                     batch_size=2*2048,
                     verbose=0,
-                    callbacks=[EarlyStopping(patience=5, restore_best_weights=True)])
+                    callbacks=[EarlyStopping(monitor="loss", patience=5, restore_best_weights=True)])
 
         # Predict on original input space (non-person-period)
         y_train_prob = model.predict(X_train, verbose=0).flatten()
@@ -106,8 +106,8 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
         return model
 
     def objective(params):
-        n_layers, size1, size2, size3, gamma, lr, bins = params
-        hidden_layers = tuple([size1, size2, size3][:n_layers])
+        n_layers, size1, size2, epochs, gamma, lr, bins = params
+        hidden_layers = tuple([size1, size2][:n_layers])
 
         param_dict = {
             "hidden_sizes": hidden_layers,
@@ -124,7 +124,8 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
             param_dict=param_dict,
             time_var=time_var,
             status_var=status_var,
-            bins=bins
+            bins=bins,
+            epochs=epochs
         )
         return -result['Val']['Mean PR-AUC']
 
@@ -133,7 +134,7 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
         Integer(1, 3, name="n_layers"),
         Integer(1, 128, name="size1"),
         Integer(1, 128, name="size2"),
-        Integer(1, 128, name="size3"),
+        Integer(490, 1000, name="epochs"),
         Real(1.0, 5.0, name="gamma"),
         Real(1e-4, 1e-2, prior='log-uniform', name="lr"),
         Integer(5, 50, name="bins")
@@ -146,9 +147,14 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
         random_state=0
     )
 
+    print("Best parameters found:")
+    print(f"n_layers: {res.x[0]}, size1: {res.x[1]}, size2: {res.x[2]}, "
+          f"epochs: {res.x[3]}, gamma: {res.x[4]}, lr: {res.x[5]}, bins: {res.x[6]}")
+
     # Best hyperparameters
     best_n_layers = res.x[0]
-    best_sizes = tuple([res.x[1], res.x[2], res.x[3]][:best_n_layers])
+    best_sizes = tuple([res.x[1], res.x[2]][:best_n_layers])
+    best_epochs = res.x[3]
     best_gamma = res.x[4]
     best_lr = res.x[5]
     best_bins = res.x[6]
@@ -168,7 +174,8 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
         param_dict=best_param_dict,
         time_var=time_var,
         status_var=status_var,
-        bins=best_bins
+        bins=best_bins,
+        epochs=best_epochs
     )
 
     return result_final
