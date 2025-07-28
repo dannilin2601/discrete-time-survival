@@ -87,32 +87,44 @@ def model_cv_keras_focal(df, model_fn, param_dict, cv_folds=5,
 
 from skopt import gp_minimize
 from skopt.space import Integer, Real
+from tensorflow.keras import regularizers
 
 def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
 
-    def build_nn(input_dim, hidden_sizes=(64,), gamma=2.0, lr=1e-3):
+    def build_nn(input_dim, hidden_sizes=(64,), gamma=2.0, lr=1e-3, l2_reg=1):
         model = tf.keras.Sequential()
         model.add(tf.keras.Input(shape=(input_dim,)))
+        
         for size in hidden_sizes:
-            model.add(tf.keras.layers.Dense(size, activation='relu'))
-        model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
-
+            model.add(tf.keras.layers.Dense(
+                size,
+                activation='relu',
+                kernel_regularizer=regularizers.l2(l2_reg)
+            ))
+        
+        model.add(tf.keras.layers.Dense(
+            1,
+            activation='sigmoid',
+            kernel_regularizer=regularizers.l2(l2_reg)
+        ))
+    
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
             loss=BinaryFocalLoss(gamma=gamma),
             metrics=["AUC"]
         )
-
+    
         return model
 
     def objective(params):
-        n_layers, size1, size2, epochs, gamma, lr, bins = params
+        n_layers, size1, size2, epochs, gamma, lr, bins, l2_reg = params
         hidden_layers = tuple([size1, size2][:n_layers])
 
         param_dict = {
             "hidden_sizes": hidden_layers,
             "gamma": gamma,
-            "lr": lr
+            "lr": lr,
+            "l2_reg": l2_reg
         }
 
         def model_fn(input_dim, **kwargs):
@@ -137,7 +149,8 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
         Integer(490, 1000, name="epochs"),
         Real(1.0, 5.0, name="gamma"),
         Real(1e-4, 1e-2, prior='log-uniform', name="lr"),
-        Integer(5, 50, name="bins")
+        Integer(5, 50, name="bins"),
+        Real(0.001, 1, name="l2_reg"),       # L2 regularization strength
     ]
 
     res = gp_minimize(
@@ -149,7 +162,7 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
 
     print("Best parameters found:")
     print(f"n_layers: {res.x[0]}, size1: {res.x[1]}, size2: {res.x[2]}, "
-          f"epochs: {res.x[3]}, gamma: {res.x[4]}, lr: {res.x[5]}, bins: {res.x[6]}")
+          f"epochs: {res.x[3]}, gamma: {res.x[4]}, lr: {res.x[5]}, bins: {res.x[6]}, l2_reg:{res.x[7]}")
 
     # Best hyperparameters
     best_n_layers = res.x[0]
@@ -158,11 +171,13 @@ def run_nn_focal(df, time_var="survTime", status_var="statusComp"):
     best_gamma = res.x[4]
     best_lr = res.x[5]
     best_bins = res.x[6]
+    best_l2_reg = res.x[7]
 
     best_param_dict = {
         "hidden_sizes": best_sizes,
         "gamma": best_gamma,
-        "lr": best_lr
+        "lr": best_lr,
+        "l2_reg": best_l2_reg
     }
 
     def model_fn_final(input_dim, **kwargs):
