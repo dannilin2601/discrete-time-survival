@@ -48,7 +48,7 @@ This repository is compatible with any survival dataset that meets the following
 - **One-hot encoded**: Categorical variables are transformed into binary columns.
 - **Right Censored**
 
-For demonstration and testing purposes, a normalized and encoded version of the **PBC dataset** (Primary Biliary Cirrhosis) is included.
+For demonstration and testing purposes, a normalized and encoded version of the **PBC dataset** (Primary Biliary Cirrhosis) is included in the data folder.
 
 📎 Original dataset source: [PBC - survival package](https://rdrr.io/cran/survival/man/pbc.html)
 
@@ -104,13 +104,24 @@ Each model is trained and evaluated using **5-fold cross-validation**, and the f
 
 The following table summarizes the performance of different models on the PBC dataset using 5-fold cross-validation. The reported metrics are averaged across the folds:
 
-| Model        | C-index   | Mean Brier | Mean PR-AUC | Mean ROC-AUC |
-|--------------|-----------|------------|--------------|---------------|
-| CoxPH_Train  | 0.849753  | 0.206721   | 0.786591     | 0.759598      |
-| CoxPH_Val    | 0.827699  | 0.217404   | 0.770339     | 0.747275      |
-| LogReg_Train | —         | 0.208020   | 0.825718     | 0.861255      |
-| LogReg_Val   | —         | 0.210058   | 0.812375     | 0.848784      |
-| NNet_Train   | —         | 0.251181   | 0.885767     | 0.907350      |
+| Model            | C-index   | Mean Brier | Mean PR-AUC | Mean ROC-AUC |
+|------------------|-----------|------------|-------------|--------------|
+| CoxPH_Train      | 0.8498    | 0.2067     | 0.7866      | 0.7596       |
+| CoxPH_Val        | 0.8277    | 0.2174     | 0.7703      | 0.7473       |
+| LogReg_Train     | —         | 0.2080     | 0.8257      | 0.8613       |
+| LogReg_Val       | —         | 0.2101     | 0.8124      | 0.8488       |
+| NNet_Train       | —         | 0.2512     | 0.8858      | 0.9074       |
+| NNet_Val         | —         | 0.2599     | 0.8282      | 0.8667       |
+| NNetFocal_Train  | —         | 0.2344     | 0.8060      | 0.8591       |
+| NNetFocal_Val    | —         | 0.2363     | 0.8013      | 0.8509       |
+| RF_Train         | —         | 0.2626     | 0.8980      | 0.9183       |
+| RF_Val           | —         | 0.2768     | 0.8231      | 0.8491       |
+| RSF_Train        | 0.8733    | 0.1899     | 0.8202      | 0.8047       |
+| RSF_Val          | 0.8305    | 0.2063     | 0.7726      | 0.7594       |
+| SVM_Train        | —         | 0.2954     | 0.8355      | 0.8821       |
+| SVM_Val          | —         | 0.3047     | 0.7126      | 0.7505       |
+| XGBoost_Train    | —         | 0.3344     | 1.0000      | 1.0000       |
+| XGBoost_Val      | —         | 0.3613     | 0.8126      | 0.8456       |
 
 Note:
 - “—” indicates the metric is not applicable for that model.
