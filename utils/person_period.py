@@ -3,7 +3,7 @@ import pandas as pd
 
 def create_discrete_intervals(time, event, bins):
     """
-    Replicates createDiscreteIntervals from R.
+    Replicates createDiscreteIntervals from https://github.com/ksuresh17/autoSurv.
     """
     unique_event_times = np.unique(time[event == 1])
     n_delta = min(bins, len(unique_event_times))
@@ -15,7 +15,7 @@ def create_discrete_intervals(time, event, bins):
 
 def create_discrete_dat(time_internal, event_internal, data_x, delta_upper, cens="same"):
     """
-    Replicates createDiscreteDat from R.
+    Replicates createDiscreteDat from https://github.com/ksuresh17/autoSurv.
     """
     delta_lower = np.concatenate(([0], delta_upper[:-1]))
     n_delta = len(delta_upper)

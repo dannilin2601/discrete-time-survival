@@ -9,7 +9,7 @@
 
 [3. Tools and libraries](#tools-and-libraries)
 
-[4. Setup](#setup)
+[4. Specifications and Setup](#spec-and-setup)
 
 [5. Results](#results)
 
@@ -78,8 +78,28 @@ The main libraries used are:
 
 ---
 
-## __Setup__ ##
+## __Specifications and Setup__ ##
 
+## __Specifications and Setup__ ##
+
+This project implements and evaluates several survival and classification models using right-censored data.
+
+Each model is trained and evaluated using **5-fold cross-validation**, and the final results are **averaged across the folds** and returned in a **DataFrame format** for easy comparison and analysis.
+
+### ⚙️ How to Run the Code
+
+1. Install all necessary packages:
+   ```
+   pip install -r requirements.txt
+   ```
+2. Run the main pipeline:
+```
+python3 main.py
+```
+3. If you'd like to test on a different dataset:
+- Go to main.py
+
+- Replace the dataset loading section with your preprocessed data (ensure it follows the format described above).
 
 ---
 ## __Results__ ##
