@@ -40,15 +40,25 @@ In this repository, we have made available the normalized and encoded PBC datase
 
 ## __Tools and libraries__ ##
 
-numpy
-pandas
-scikit-learn
-xgboost
-lifelines
-scikit-survival
-scikit-optimize
-tensorflow
-focal-loss
+This project was developed in Python, primarily using Jupyter Notebooks, for machine learning and survival analysis tasks.
+
+The main libraries used are:
+
+* __Pandas and NumPy__: for data manipulation, cleaning, and numerical operations.
+
+* __Scikit-learn__: for traditional ML models such as logistic regression, SVM, random forest, and Neural Nets.
+
+* __XGBoost__: for gradient boosting classification.
+
+* __Lifelines__: for Cox Proportional Hazards modeling and concordance metrics.
+
+* __Scikit-survival__: for random survival forests and concordance metrics.
+
+* __Scikit-optimize (skopt)__: for hyperparameter tuning using Bayesian optimization.
+
+* __TensorFlow__: for implementing Neural Nets when using focal loss.
+
+* __Focal-loss__: for applying binary focal loss during training.
 
 ## __Results__ ##
 
