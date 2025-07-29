@@ -90,10 +90,12 @@ Each model is trained and evaluated using **5-fold cross-validation**, and the f
    ```
    pip install -r requirements.txt
    ```
+   
 2. Run the main pipeline:
-```
-python3 main.py
-```
+    ```
+    python3 main.py
+    ```
+
 3. If you'd like to test on a different dataset:
 - Go to main.py
 
