@@ -80,8 +80,6 @@ The main libraries used are:
 
 ## __Specifications and Setup__ ##
 
-This project implements and evaluates several survival and classification models using right-censored data.
-
 Each model is trained and evaluated using **5-fold cross-validation**, and the final results are **averaged across the folds** and returned in a **DataFrame format** for easy comparison and analysis.
 
 ### ⚙️ How to Run the Code
@@ -104,6 +102,18 @@ Each model is trained and evaluated using **5-fold cross-validation**, and the f
 ---
 ## __Results__ ##
 
+The following table summarizes the performance of different models on the PBC dataset using 5-fold cross-validation. The reported metrics are averaged across the folds:
+
+| Model        | C-index   | Mean Brier | Mean PR-AUC | Mean ROC-AUC |
+|--------------|-----------|------------|--------------|---------------|
+| CoxPH_Train  | 0.849753  | 0.206721   | 0.786591     | 0.759598      |
+| CoxPH_Val    | 0.827699  | 0.217404   | 0.770339     | 0.747275      |
+| LogReg_Train | —         | 0.208020   | 0.825718     | 0.861255      |
+| LogReg_Val   | —         | 0.210058   | 0.812375     | 0.848784      |
+| NNet_Train   | —         | 0.251181   | 0.885767     | 0.907350      |
+
+Note:
+- “—” indicates the metric is not applicable for that model.
 
 ---
 

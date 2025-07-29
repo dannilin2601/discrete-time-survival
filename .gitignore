@@ -6,6 +6,8 @@ __pycache__/
 # Ignore virtual environment folder
 discre_time_env/
 data/TCGA_dataset/
+output/clinical_white_kirc_results.csv
+output/mirna_white_kirc_results.csv
 
 # Ignore Jupyter Notebook checkpoints (if any)
 .ipynb_checkpoints/
