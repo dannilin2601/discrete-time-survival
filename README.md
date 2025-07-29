@@ -90,7 +90,7 @@ Each model is trained and evaluated using **5-fold cross-validation**, and the f
    ```
    pip install -r requirements.txt
    ```
-   
+
 2. Run the main pipeline:
     ```
     python3 main.py
@@ -105,4 +105,9 @@ Each model is trained and evaluated using **5-fold cross-validation**, and the f
 ## __Results__ ##
 
 
+---
+
+## __Citation__ ##
+
+Suresh, K., Severn, C. & Ghosh, D. Survival prediction models: an introduction to discrete-time modeling. BMC Med Res Methodol 22, 207 (2022). https://doi.org/10.1186/s12874-022-01679-6
 ---
