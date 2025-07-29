@@ -19,9 +19,9 @@
 
 ## __About the project__ ##
 
-This repository adapts the original [autoSurv](https://github.com/ksuresh17/autoSurv) codebase — originally implemented in R — into Python. The goal is to provide a modular and flexible framework for benchmarking and applying classical machine learning and survival models for survival analysi tasks.
+This repository adapts the original [autoSurv](https://github.com/ksuresh17/autoSurv) codebase — originally implemented in R — into Python. The goal is to provide a Python framework for benchmarking and applying classical machine learning and survival models for survival analysis tasks.
 
-This adaptation is tailored for research use, model benchmarking, and reproducibility experiments in survival analysis, particularly under settings involving class imbalance or the need for discrete-time modeling techniques.
+This adaptation is tailored for research use, model benchmarking, and reproducibility experiments in survival analysis, particularly under settings in the need for discrete-time survival modeling techniques.
 
 ### 🔍 Models Available
 
