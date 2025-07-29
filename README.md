@@ -9,7 +9,9 @@
 
 [3. Tools and libraries](#tools-and-libraries)
 
-[4. Results](#results)
+[4. Setup](#setup)
+
+[5. Results](#results)
 
 </ul>
 
@@ -17,20 +19,26 @@
 
 ## __About the project__ ##
 
-We adapted the R version from https://github.com/ksuresh17/autoSurv
+This repository adapts the original [autoSurv](https://github.com/ksuresh17/autoSurv) codebase — originally implemented in R — into Python. The goal is to provide a modular and flexible framework for benchmarking and applying classical and modern machine learning models for survival analysis.
 
-Models available are:     
+This adaptation is tailored for research use, model benchmarking, and reproducibility experiments in survival analysis, particularly under settings involving class imbalance or the need for discrete-time modeling techniques.
 
-- Cox Proportional Hazards model
-- Neural Network
-- Logistic Regression
-- XGBoost
-- Support Vector Machine
-- Random Forest
-- Random Survival Forest
-- Neural Network with Focal Loss
+### 🔍 Models Available
 
-<hr>
+The following models are implemented:
+
+- **Cox Proportional Hazards (CoxPH)** 
+- **Neural Network** 
+- **Logistic Regression**
+- **XGBoost** 
+- **Support Vector Machine (SVM)** 
+- **Random Forest** 
+- **Random Survival Forest (RSF)** 
+- **Neural Network with Focal Loss** 
+
+This project supports both continuous and discretized survival formulations.
+
+---
 
 ## __About the dataset__ ##
 
@@ -38,6 +46,7 @@ This repository is compatible with any survival dataset that meets the following
 
 - **Normalized**: Continuous features are scaled appropriately.
 - **One-hot encoded**: Categorical variables are transformed into binary columns.
+- **Right Censored**:
 
 For demonstration and testing purposes, a normalized and encoded version of the **PBC dataset** (Primary Biliary Cirrhosis) is included.
 
@@ -64,6 +73,10 @@ The main libraries used are:
 * __TensorFlow__: for implementing Neural Nets when using focal loss.
 
 * __Focal-loss__: for applying binary focal loss during training.
+
+## __Setup__ ##
+
+
 
 ## __Results__ ##
 
