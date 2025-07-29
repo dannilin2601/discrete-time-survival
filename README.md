@@ -34,13 +34,18 @@ Models available are:
 
 ## __About the dataset__ ##
 
-Any dataset that has been normalized and one hot encoded for categorical variables with event and time-to-event labels can be used.
+This repository is compatible with any survival dataset that meets the following criteria:
 
-In this repository, we have made available the normalized and encoded PBC dataset which is (...) for testing puposes of this code.
+- **Normalized**: Continuous features are scaled appropriately.
+- **One-hot encoded**: Categorical variables are transformed into binary columns.
+
+For demonstration and testing purposes, a normalized and encoded version of the **PBC dataset** (Primary Biliary Cirrhosis) is included.
+
+📎 Original dataset source: [PBC - survival package](https://rdrr.io/cran/survival/man/pbc.html)
 
 ## __Tools and libraries__ ##
 
-This project was developed in Python, primarily using Jupyter Notebooks, for machine learning and survival analysis tasks.
+This project was developed in Python, for machine learning and survival analysis tasks.
 
 The main libraries used are:
 
