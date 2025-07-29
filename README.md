@@ -80,8 +80,6 @@ The main libraries used are:
 
 ## __Specifications and Setup__ ##
 
-## __Specifications and Setup__ ##
-
 This project implements and evaluates several survival and classification models using right-censored data.
 
 Each model is trained and evaluated using **5-fold cross-validation**, and the final results are **averaged across the folds** and returned in a **DataFrame format** for easy comparison and analysis.
