@@ -9,7 +9,7 @@
 
 [3. Tools and libraries](#tools-and-libraries)
 
-[4. Tools and libraries](#results)
+[4. Results](#results)
 
 </ul>
 
@@ -50,5 +50,5 @@ scikit-optimize
 tensorflow
 focal-loss
 
-## __Results_ ##
+## __Results__ ##
 
