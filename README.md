@@ -46,11 +46,13 @@ This repository is compatible with any survival dataset that meets the following
 
 - **Normalized**: Continuous features are scaled appropriately.
 - **One-hot encoded**: Categorical variables are transformed into binary columns.
-- **Right Censored**:
+- **Right Censored**
 
 For demonstration and testing purposes, a normalized and encoded version of the **PBC dataset** (Primary Biliary Cirrhosis) is included.
 
 📎 Original dataset source: [PBC - survival package](https://rdrr.io/cran/survival/man/pbc.html)
+
+---
 
 ## __Tools and libraries__ ##
 
@@ -74,9 +76,13 @@ The main libraries used are:
 
 * __Focal-loss__: for applying binary focal loss during training.
 
+---
+
 ## __Setup__ ##
 
 
-
+---
 ## __Results__ ##
 
+
+---
